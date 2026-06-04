@@ -164,7 +164,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
+      list_app_users: {
+        Args: never
+        Returns: {
+          email: string
+          id: string
+          is_admin: boolean
+        }[]
+      }
+      set_user_admin: {
+        Args: { _is_admin: boolean; _user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       inquiry_status: "New" | "Quoting" | "Won" | "Lost"

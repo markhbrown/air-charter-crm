@@ -2,18 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Users, Plane, LayoutDashboard } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Plane,
+  LayoutDashboard,
+  ShieldCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const links = [
+const baseLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/companies", label: "Companies", icon: Building2 },
   { href: "/dashboard/contacts", label: "Contacts", icon: Users },
   { href: "/dashboard/inquiries", label: "Inquiries", icon: Plane },
 ];
 
-export function DashboardNav() {
+const adminLink = {
+  href: "/dashboard/admin",
+  label: "Admin",
+  icon: ShieldCheck,
+};
+
+export function DashboardNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const links = isAdmin ? [...baseLinks, adminLink] : baseLinks;
 
   return (
     <nav className="flex flex-col gap-1">
