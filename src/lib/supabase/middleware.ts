@@ -39,13 +39,22 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Add route protection here as the app grows, e.g.:
-  // if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
-  //   const url = request.nextUrl.clone();
-  //   url.pathname = "/login";
-  //   return NextResponse.redirect(url);
-  // }
-  void user;
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = pathname === "/login";
+
+  // Unauthenticated users may only reach the login page.
+  if (!user && !isAuthRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Signed-in users shouldn't see the login page.
+  if (user && isAuthRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
 
   // IMPORTANT: Return `supabaseResponse` as-is. If you create a new response,
   // copy over `supabaseResponse.cookies` or the session will not persist.
