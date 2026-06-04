@@ -18,6 +18,29 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Local development with Supabase
+
+This project uses a local Supabase stack (run via the Supabase CLI) for the database and auth.
+
+```bash
+supabase start                      # boot Postgres, Auth, Studio, etc.
+cp .env.local.example .env.local    # then paste keys from `supabase status`
+supabase db reset                   # apply migrations + load seed data
+npm run dev
+```
+
+`supabase status` prints the API URL and the **Publishable** key — put them in `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Supabase Studio is at http://127.0.0.1:54323.
+
+### Test account
+
+`supabase db reset` seeds a ready-to-use broker account plus sample companies, contacts and inquiries:
+
+| Email | Password |
+| --- | --- |
+| `broker@aircharter.test` | `Password123!` |
+
+This account is **local only** — it is recreated on every `supabase db reset` and does not exist on any hosted/deployed environment (create a demo account there via normal sign-up).
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
