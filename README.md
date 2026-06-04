@@ -68,9 +68,10 @@ only ever access their own data.**
   -- insert/update/delete policies likewise check (select auth.uid()) = user_id
   ```
 
-  Table privileges are granted explicitly — `revoke all ... from anon` (the data is private) and
-  `grant ... to authenticated, service_role` — so a table is never reachable by the public key
-  without policies.
+  Table privileges are granted explicitly — `revoke all ... from anon, service_role` (Supabase's
+  default privileges otherwise grant both full access) and `grant ... to authenticated` — so the data
+  is reachable only by the authenticated owner through the policies above, never by the public or
+  service-role keys.
 - **Admin role** — an optional back-office role. A user whose `app_metadata.role = "admin"` (set
   server-side, not user-editable, and carried in the verified JWT) gets extra permissive policies that
   read the role from `auth.jwt()` and grant **full access to every owner's data**:
