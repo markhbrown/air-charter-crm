@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CompanyFormDialog } from "@/components/companies/company-form-dialog";
 
 export default async function CompaniesPage() {
   const supabase = await createClient();
@@ -17,11 +18,14 @@ export default async function CompaniesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
-        <p className="text-muted-foreground">
-          Operators and corporate clients you work with.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
+          <p className="text-muted-foreground">
+            Operators and corporate clients you work with.
+          </p>
+        </div>
+        <CompanyFormDialog />
       </div>
 
       {companies && companies.length > 0 ? (
@@ -32,6 +36,7 @@ export default async function CompaniesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Country</TableHead>
                 <TableHead>Notes</TableHead>
+                <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -42,13 +47,18 @@ export default async function CompaniesPage() {
                   <TableCell className="max-w-md truncate text-muted-foreground">
                     {company.notes ?? "—"}
                   </TableCell>
+                  <TableCell>
+                    <CompanyFormDialog company={company} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No companies yet.</p>
+        <p className="text-sm text-muted-foreground">
+          No companies yet. Add your first one to get started.
+        </p>
       )}
     </div>
   );

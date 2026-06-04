@@ -43,7 +43,7 @@ Next.js App Router with the `src/` directory. Import alias: `@/*` -> `./src/*`.
 
 Note: Next.js 16 renamed the request-interception file convention from `middleware.ts` to **`proxy.ts`** (exported function `proxy`). The session-refresh helper module keeps the `middleware.ts` filename, matching Supabase's docs; only the framework convention file is `src/proxy.ts`.
 
-Auth gating is intentionally left open in `updateSession()` — add route protection there (commented example included) as protected areas are built.
+Route protection lives in `updateSession()`: unauthenticated requests are redirected to `/login` (only `/login` is public) and signed-in users are redirected off `/login`. The dashboard layout re-checks `getUser()` as a backstop before any data fetch.
 
 ## Conventions
 
@@ -51,3 +51,11 @@ Auth gating is intentionally left open in `updateSession()` — add route protec
 - **Supabase**: Access the DB through the appropriate client above. Do data mutations in Server Actions / Route Handlers using the server client. Keep schema changes in versioned migrations (`supabase migration new`), never by editing the DB by hand — and regenerate `database.types.ts` afterward. Use the Publishable key on the client; the Secret key only server-side.
 - **Row Level Security (RLS) is mandatory.** Every table must have RLS enabled (`alter table <t> enable row level security;`) with explicit policies in the same migration that creates it. Never ship a table reachable by the Publishable key without policies. Treat a table without RLS as a bug.
 - **UI**: Use **shadcn/ui** as the component library. Add components with `npx shadcn@latest add <component>` (run `npx shadcn@latest init` once if not yet initialized) and compose from those primitives rather than hand-rolling equivalent components. Styling is Tailwind CSS v4.
+- **shadcn here is built on Base UI** (`@base-ui/react`), not Radix. Consequences that bite:
+  - `Button` (and anything built on it) **defaults `type="button"`**. A button that submits a form MUST set `type="submit"` explicitly, or the form silently won't submit.
+  - To render a custom element as a trigger, use the **`render` prop** (`<DialogTrigger render={<Button/>} />`), not Radix's `asChild`.
+  - **Build triggers inside the Client Component, never pass a Base UI element across the RSC boundary.** A `<DialogTrigger>`/`<Button>` element created in a Server Component page and passed as a prop misaligns Base UI's internal `useId`, causing a hydration mismatch on the `id` attribute. The dialog components own their own triggers (varying by an `isEdit`/data prop) for this reason.
+  - For `Select`, drive it with React state + a `<input type="hidden" name=...>` rather than relying on the native `name` to post, and pass `items={[{label,value}]}` to the root so `SelectValue` shows the label (useful when the value is an id).
+- **Forms & mutations**: dialogs on the list pages use Server Actions with `useActionState`. Actions return a `FormState` (`@/lib/forms`) — `{ ok }` to close the dialog, `{ fieldErrors }` from a Zod `safeParse`, or `{ error }` for a DB error. Inserts omit `user_id` (the column defaults to `auth.uid()`); the RLS insert policy enforces ownership. After a mutation, `revalidatePath` the affected list + `/dashboard`. Two gotchas that already bit us:
+  - **React 19 resets a `<form action={…}>` after every submit**, including failed ones — which clears uncontrolled fields. To preserve input on a validation error, the action echoes the submitted strings back in `FormState.values` and the inputs use `defaultValue={state?.values?.x ?? record?.x ?? ""}`.
+  - **Zod v4 `z.string().uuid()` enforces RFC version/variant bits.** The seed data uses placeholder UUIDs (e.g. `10000000-…-0002`) that fail it, so FK ids are validated with `z.string().min(1)` instead — the Postgres `uuid` column already rejects malformed values.
