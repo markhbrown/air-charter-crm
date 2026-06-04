@@ -39,6 +39,7 @@ npm run dev
 | ------------------------- | -------------- | ----------------------------- |
 | `broker@aircharter.test`  | `Password123!` | Meridian / Acme / Aurora data |
 | `manager@aircharter.test` | `Password123!` | a separate set of records     |
+| `admin@aircharter.test`   | `Password123!` | Admin user                    |
 
 Log in as the two owners to see Row Level Security in action — **neither sees the other's data**. Log
 in as `admin@` to see (and create/edit/delete) **everything**. All are **local only** — recreated on
@@ -88,3 +89,9 @@ only ever access their own data.**
 - Inviting **brand-new** (unregistered) users would need email-token invites
   (`auth.admin.inviteUserByEmail`, server-side with the Secret key).
 - The seeded accounts are local-only fixtures; hosted environments use real sign-up.
+
+### Vercel Link
+
+https://air-charter-crm.vercel.app/
+
+use the login details stated above.
