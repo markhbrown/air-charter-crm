@@ -91,7 +91,7 @@ only ever access their own data.**
 - The seeded accounts are local-only fixtures; hosted environments use real sign-up.
 - Add functionlity to assign a user again a company when Admin created.
 - Improve the error messages to deal with offline.
-- Add in skeleton loading states.
+- Improve mobile styling.
 
 ### Vercel Link
 
