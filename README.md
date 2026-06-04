@@ -89,6 +89,7 @@ only ever access their own data.**
 - Inviting **brand-new** (unregistered) users would need email-token invites
   (`auth.admin.inviteUserByEmail`, server-side with the Secret key).
 - The seeded accounts are local-only fixtures; hosted environments use real sign-up.
+- Add functionlity to assign a user again a company when Admin created.
 
 ### Vercel Link
 
