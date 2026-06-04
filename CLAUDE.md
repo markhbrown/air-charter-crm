@@ -29,6 +29,8 @@ Only one local Supabase stack can use the default ports at a time. If `supabase 
 
 Copy `.env.local.example` to `.env.local`. This CLI uses the **new key format**: `supabase status` prints a **Publishable** key (browser-safe; use it for `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and a **Secret** key (service-role equivalent — server-only, never expose to the browser or commit it).
 
+`supabase/seed.sql` (loaded by `supabase db reset`) creates a **local-only** test account — `broker@aircharter.test` / `Password123!` — that owns all the seeded companies/contacts/inquiries. It is recreated on every reset and does not exist on hosted environments. The seed inserts into both `auth.users` and `auth.identities` (the latter is required for email/password login in current GoTrue).
+
 ## Architecture
 
 Next.js App Router with the `src/` directory. Import alias: `@/*` -> `./src/*`.
