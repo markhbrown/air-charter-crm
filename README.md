@@ -37,8 +37,8 @@ npm run dev
 
 | Email                     | Password       | Owns                          |
 | ------------------------- | -------------- | ----------------------------- |
-| `broker@aircharter.test`  | `Password123!` | Meridian / Acme / Aurora data |
-| `manager@aircharter.test` | `Password123!` | a separate set of records     |
+| `broker1@aircharter.test` | `Password123!` | Meridian / Acme / Aurora data |
+| `broker2@aircharter.test` | `Password123!` | a separate set of records     |
 | `admin@aircharter.test`   | `Password123!` | Admin user                    |
 
 Log in as the two owners to see Row Level Security in action — **neither sees the other's data**. Log
