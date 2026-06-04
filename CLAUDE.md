@@ -29,17 +29,18 @@ Only one local Supabase stack can use the default ports at a time. If `supabase 
 
 Copy `.env.local.example` to `.env.local`. This CLI uses the **new key format**: `supabase status` prints a **Publishable** key (browser-safe; use it for `NEXT_PUBLIC_SUPABASE_ANON_KEY`) and a **Secret** key (service-role equivalent — server-only, never expose to the browser or commit it).
 
-`supabase/seed.sql` (loaded by `supabase db reset`) creates a **local-only** test account — `broker@aircharter.test` / `Password123!` — that owns all the seeded companies/contacts/inquiries. It is recreated on every reset and does not exist on hosted environments. The seed inserts into both `auth.users` and `auth.identities` (the latter is required for email/password login in current GoTrue).
+`supabase/seed.sql` (loaded by `supabase db reset`) creates **two local-only** test accounts — `broker@aircharter.test` and `manager@aircharter.test`, both `/ Password123!` — each owning a separate set of companies/contacts/inquiries. The second account exists to demonstrate RLS owner-isolation: neither user can see the other's rows. They are recreated on every reset and do not exist on hosted environments. The seed inserts into both `auth.users` and `auth.identities` (the latter is required for email/password login in current GoTrue).
 
 ## Architecture
 
 Next.js App Router with the `src/` directory. Import alias: `@/*` -> `./src/*`.
 
-**The three Supabase clients (do not mix them up):**
+**Supabase access uses one client type — the server client (`createServerClient`, Publishable key) — instantiated for two different runtime contexts (don't mix them up):**
 
-- `src/lib/supabase/client.ts` — `createClient()` for **Client Components** (`"use client"`). Browser-side.
-- `src/lib/supabase/server.ts` — async `createClient()` for **Server Components, Route Handlers, and Server Actions**. `cookies()` is async in Next 15+, so this factory is async — always `await createClient()`.
-- `src/lib/supabase/middleware.ts` — `updateSession()`, called from `src/proxy.ts` on every matched request. It refreshes the auth session and syncs auth cookies between browser and server. Without it, Server Components can read a stale/expired session.
+- `src/lib/supabase/server.ts` — async `createClient()` for **Server Components, Route Handlers, and Server Actions**. Reads/writes cookies via `next/headers` `cookies()`, which is async in Next 15+, so this factory is async — always `await createClient()`. All data access goes through this; it *uses* the session.
+- `src/lib/supabase/middleware.ts` — `updateSession()`, called from `src/proxy.ts` on every matched request. Binds a server client to the `NextRequest`/`NextResponse` cookies (the proxy layer has no `next/headers`) and *refreshes* the session, syncing auth cookies between browser and server. Without it, Server Components can read a stale/expired session.
+
+(There's no browser client — nothing queries Supabase from the client. If a Client Component ever needs one, add `createBrowserClient` from `@supabase/ssr`.)
 
 Note: Next.js 16 renamed the request-interception file convention from `middleware.ts` to **`proxy.ts`** (exported function `proxy`). The session-refresh helper module keeps the `middleware.ts` filename, matching Supabase's docs; only the framework convention file is `src/proxy.ts`.
 

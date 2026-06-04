@@ -31,17 +31,61 @@ npm run dev
 
 `supabase status` prints the API URL and the **Publishable** key — put them in `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Supabase Studio is at http://127.0.0.1:54323.
 
-### Test account
+### Test accounts
 
-`supabase db reset` seeds a ready-to-use broker account plus sample companies, contacts and inquiries:
+`supabase db reset` seeds **two** accounts, each owning its own companies, contacts and inquiries:
 
-| Email | Password |
-| --- | --- |
-| `broker@aircharter.test` | `Password123!` |
+| Email | Password | Owns |
+| --- | --- | --- |
+| `broker@aircharter.test` | `Password123!` | Meridian / Acme / Aurora data |
+| `manager@aircharter.test` | `Password123!` | a separate set of records |
 
-This account is **local only** — it is recreated on every `supabase db reset` and does not exist on any hosted/deployed environment (create a demo account there via normal sign-up).
+Log in as each to see Row Level Security in action: **neither account can see the other's data**.
+Both are **local only** — recreated on every `supabase db reset` and absent from any hosted/deployed
+environment (create a demo account there via normal sign-up).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Security & data access
+
+Every record is tied to the user who created it, and **Row Level Security (RLS) guarantees a user can
+only ever access their own data.**
+
+- **Authentication** — Supabase Auth (email/password). The session is carried in `@supabase/ssr`
+  cookies and refreshed on every request by `src/proxy.ts` → `updateSession()`, which also enforces
+  routing: only `/login` is public, and the dashboard layout re-checks `getUser()` before any data
+  fetch as a backstop.
+- **Ownership** — each table (`companies`, `contacts`, `inquiries`) has
+  `user_id uuid not null default auth.uid()` referencing `auth.users`. Inserts **omit** `user_id`, so
+  the database default sets it from the authenticated session — a client cannot spoof ownership.
+- **Row Level Security** — RLS is enabled on every table with owner-only policies for all four
+  commands, e.g.:
+
+  ```sql
+  create policy "Users can view their own companies"
+    on public.companies for select
+    to authenticated
+    using ((select auth.uid()) = user_id);
+  -- insert/update/delete policies likewise check (select auth.uid()) = user_id
+  ```
+
+  Table privileges are granted explicitly — `revoke all ... from anon` (the data is private) and
+  `grant ... to authenticated, service_role` — so a table is never reachable by the public key
+  without policies.
+- **Keys** — the browser only ever uses the **Publishable** key; the **Secret** (service-role) key is
+  server-only and never shipped to the client.
+- **See it yourself** — sign in as `broker@aircharter.test` then `manager@aircharter.test` (both
+  `Password123!`): each sees only its own companies/contacts/inquiries. Unauthenticated requests are
+  redirected to `/login`, and the data API returns zero rows without a valid session.
+
+### Limitations & what I'd do next
+
+- The model is **single-owner isolation**. To support a brokerage **team sharing** the same data, I'd
+  add `organizations` + `memberships(role admin/member)` and an `org_id` on each table, then switch
+  the RLS policies to membership-based checks via `security definer` helper functions
+  (`is_org_member` / `is_org_admin`) to avoid policy recursion — with an org-creation trigger to
+  bootstrap the first admin and an active-org switcher in the UI.
+- Inviting **brand-new** (unregistered) users would need email-token invites
+  (`auth.admin.inviteUserByEmail`, server-side with the Secret key).
+- The seeded accounts are local-only fixtures; hosted environments use real sign-up.
 
 ## Learn More
 
