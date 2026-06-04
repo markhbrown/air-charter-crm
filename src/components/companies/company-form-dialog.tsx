@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { saveCompany, deleteCompany } from "@/app/dashboard/companies/actions";
-import type { FormState } from "@/lib/forms";
+import { withSubmitErrorHandling, type FormState } from "@/lib/forms";
 import { FieldError } from "@/components/field-error";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,11 +84,18 @@ function CompanyForm({
   onDone: () => void;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
-    saveCompany,
+    withSubmitErrorHandling(saveCompany),
     null,
   );
   const [deletePending, startDelete] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Controlled fields: their React state survives React 19's post-submit form
+  // reset, so input is preserved on a failed submit — without the changing
+  // `defaultValue` that makes Base UI's input warn about uncontrolled state.
+  const [name, setName] = useState(company?.name ?? "");
+  const [country, setCountry] = useState(company?.country ?? "");
+  const [notes, setNotes] = useState(company?.notes ?? "");
 
   useEffect(() => {
     if (state?.ok) onDone();
@@ -103,7 +110,8 @@ function CompanyForm({
         <Input
           id="name"
           name="name"
-          defaultValue={state?.values?.name ?? company?.name ?? ""}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           required
         />
         <FieldError errors={state?.fieldErrors?.name} />
@@ -114,7 +122,8 @@ function CompanyForm({
         <Input
           id="country"
           name="country"
-          defaultValue={state?.values?.country ?? company?.country ?? ""}
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
         />
       </div>
 
@@ -124,7 +133,8 @@ function CompanyForm({
           id="notes"
           name="notes"
           rows={3}
-          defaultValue={state?.values?.notes ?? company?.notes ?? ""}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
         />
       </div>
 
@@ -143,9 +153,15 @@ function CompanyForm({
             pending={deletePending}
             onConfirm={() =>
               startDelete(async () => {
-                const res = await deleteCompany(company.id);
-                if (res?.error) setDeleteError(res.error);
-                else onDone();
+                try {
+                  const res = await deleteCompany(company.id);
+                  if (res?.error) setDeleteError(res.error);
+                  else onDone();
+                } catch {
+                  setDeleteError(
+                    "Couldn't delete — check your connection and try again.",
+                  );
+                }
               })
             }
           />

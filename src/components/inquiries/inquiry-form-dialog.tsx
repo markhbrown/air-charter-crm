@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { saveInquiry, deleteInquiry } from "@/app/dashboard/inquiries/actions";
-import type { FormState } from "@/lib/forms";
+import { withSubmitErrorHandling, type FormState } from "@/lib/forms";
 import type { Database } from "@/lib/database.types";
 import { FieldError } from "@/components/field-error";
 import { DeleteConfirm } from "@/components/delete-confirm";
@@ -110,12 +110,17 @@ function InquiryForm({
   onDone: () => void;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
-    saveInquiry,
+    withSubmitErrorHandling(saveInquiry),
     null,
   );
   const [companyId, setCompanyId] = useState(inquiry?.company_id ?? "");
   const [contactId, setContactId] = useState(inquiry?.contact_id ?? NO_CONTACT);
   const [status, setStatus] = useState<InquiryStatus>(inquiry?.status ?? "New");
+  const [origin, setOrigin] = useState(inquiry?.origin_airport ?? "");
+  const [destination, setDestination] = useState(
+    inquiry?.destination_airport ?? "",
+  );
+  const [flightDate, setFlightDate] = useState(inquiry?.flight_date ?? "");
   const [deletePending, startDelete] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -203,9 +208,8 @@ function InquiryForm({
             id="origin_airport"
             name="origin_airport"
             placeholder="LHR"
-            defaultValue={
-              state?.values?.origin_airport ?? inquiry?.origin_airport ?? ""
-            }
+            value={origin}
+            onChange={(e) => setOrigin(e.target.value)}
             required
           />
           <FieldError errors={state?.fieldErrors?.origin_airport} />
@@ -216,11 +220,8 @@ function InquiryForm({
             id="destination_airport"
             name="destination_airport"
             placeholder="GVA"
-            defaultValue={
-              state?.values?.destination_airport ??
-              inquiry?.destination_airport ??
-              ""
-            }
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
             required
           />
           <FieldError errors={state?.fieldErrors?.destination_airport} />
@@ -234,9 +235,8 @@ function InquiryForm({
             id="flight_date"
             name="flight_date"
             type="date"
-            defaultValue={
-              state?.values?.flight_date ?? inquiry?.flight_date ?? ""
-            }
+            value={flightDate}
+            onChange={(e) => setFlightDate(e.target.value)}
             required
           />
           <FieldError errors={state?.fieldErrors?.flight_date} />
@@ -277,9 +277,15 @@ function InquiryForm({
             pending={deletePending}
             onConfirm={() =>
               startDelete(async () => {
-                const res = await deleteInquiry(inquiry.id);
-                if (res?.error) setDeleteError(res.error);
-                else onDone();
+                try {
+                  const res = await deleteInquiry(inquiry.id);
+                  if (res?.error) setDeleteError(res.error);
+                  else onDone();
+                } catch {
+                  setDeleteError(
+                    "Couldn't delete — check your connection and try again.",
+                  );
+                }
               })
             }
           />

@@ -1,0 +1,27 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+
+// Safety-net boundary for anything that throws during a dashboard render
+// (e.g. a page-level data fetch failing) and isn't handled in-place.
+export default function DashboardError({
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+      <div>
+        <h2 className="text-lg font-semibold">Something went wrong</h2>
+        <p className="text-sm text-muted-foreground">
+          We couldn&apos;t load this page. This is often a temporary connection
+          issue.
+        </p>
+      </div>
+      <Button type="button" onClick={() => reset()}>
+        Try again
+      </Button>
+    </div>
+  );
+}

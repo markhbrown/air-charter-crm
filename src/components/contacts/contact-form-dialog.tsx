@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { saveContact, deleteContact } from "@/app/dashboard/contacts/actions";
-import type { FormState } from "@/lib/forms";
+import { withSubmitErrorHandling, type FormState } from "@/lib/forms";
 import { FieldError } from "@/components/field-error";
 import { DeleteConfirm } from "@/components/delete-confirm";
 import { Button } from "@/components/ui/button";
@@ -101,10 +101,13 @@ function ContactForm({
   onDone: () => void;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
-    saveContact,
+    withSubmitErrorHandling(saveContact),
     null,
   );
   const [companyId, setCompanyId] = useState(contact?.company_id ?? "");
+  const [name, setName] = useState(contact?.name ?? "");
+  const [role, setRole] = useState(contact?.role ?? "");
+  const [email, setEmail] = useState(contact?.email ?? "");
   const [deletePending, startDelete] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -124,7 +127,8 @@ function ContactForm({
         <Input
           id="name"
           name="name"
-          defaultValue={state?.values?.name ?? contact?.name ?? ""}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           required
         />
         <FieldError errors={state?.fieldErrors?.name} />
@@ -157,7 +161,8 @@ function ContactForm({
           id="role"
           name="role"
           placeholder="e.g. Ops Manager"
-          defaultValue={state?.values?.role ?? contact?.role ?? ""}
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
         />
       </div>
 
@@ -167,7 +172,8 @@ function ContactForm({
           id="email"
           name="email"
           type="email"
-          defaultValue={state?.values?.email ?? contact?.email ?? ""}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <FieldError errors={state?.fieldErrors?.email} />
       </div>
@@ -187,9 +193,15 @@ function ContactForm({
             pending={deletePending}
             onConfirm={() =>
               startDelete(async () => {
-                const res = await deleteContact(contact.id);
-                if (res?.error) setDeleteError(res.error);
-                else onDone();
+                try {
+                  const res = await deleteContact(contact.id);
+                  if (res?.error) setDeleteError(res.error);
+                  else onDone();
+                } catch {
+                  setDeleteError(
+                    "Couldn't delete — check your connection and try again.",
+                  );
+                }
               })
             }
           />
