@@ -31,14 +31,7 @@ export async function saveCompany(
   });
 
   if (!parsed.success) {
-    return {
-      fieldErrors: parsed.error.flatten().fieldErrors,
-      values: {
-        name: String(formData.get("name") ?? ""),
-        country: String(formData.get("country") ?? ""),
-        notes: String(formData.get("notes") ?? ""),
-      },
-    };
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const values = {

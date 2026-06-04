@@ -8,10 +8,6 @@ export type FormState = {
   ok?: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  // The submitted values, echoed back on validation failure so the form can
-  // repopulate them. React 19 resets a `<form action>` after submit, which
-  // would otherwise clear what the user typed.
-  values?: Record<string, string>;
 } | null;
 
 /**
@@ -22,8 +18,7 @@ export type FormState = {
  *
  * The returned reducer runs on the client (it's the `useActionState` reducer),
  * so its try/catch catches both the rejected server-action promise and a failed
- * fetch. Submitted values are re-derived from the FormData so the form keeps
- * what the user typed.
+ * fetch. The form fields are controlled, so they keep what the user typed.
  */
 export function withSubmitErrorHandling(
   action: (prev: FormState, formData: FormData) => Promise<FormState>,
@@ -34,11 +29,6 @@ export function withSubmitErrorHandling(
     } catch {
       return {
         error: "Couldn't reach the server — check your connection and try again.",
-        values: Object.fromEntries(
-          [...formData.entries()].filter(
-            ([key, value]) => typeof value === "string" && key !== "id",
-          ),
-        ) as Record<string, string>,
       };
     }
   };

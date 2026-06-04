@@ -33,14 +33,7 @@ export async function saveContact(
   });
 
   if (!parsed.success) {
-    return {
-      fieldErrors: parsed.error.flatten().fieldErrors,
-      values: {
-        name: String(formData.get("name") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        role: String(formData.get("role") ?? ""),
-      },
-    };
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const values = {

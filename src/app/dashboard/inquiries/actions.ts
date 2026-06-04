@@ -46,14 +46,7 @@ export async function saveInquiry(
   });
 
   if (!parsed.success) {
-    return {
-      fieldErrors: parsed.error.flatten().fieldErrors,
-      values: {
-        origin_airport: String(formData.get("origin_airport") ?? ""),
-        destination_airport: String(formData.get("destination_airport") ?? ""),
-        flight_date: String(formData.get("flight_date") ?? ""),
-      },
-    };
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const values = {
