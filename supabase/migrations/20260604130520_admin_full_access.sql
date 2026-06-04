@@ -29,8 +29,10 @@ $$;
 -- Explicit privileges (functions default to PUBLIC execute). RLS policies on the
 -- data tables call this as the authenticated role, so grant it there; anon never
 -- needs it.
-revoke all on function public.is_admin() from public, anon;
-grant execute on function public.is_admin() to authenticated, service_role;
+-- service_role is excluded too: Supabase default-grants execute on new public
+-- functions to service_role, and this app never uses it (it bypasses RLS).
+revoke all on function public.is_admin() from public, anon, service_role;
+grant execute on function public.is_admin() to authenticated;
 
 -- companies
 create policy "Admins can view all companies"

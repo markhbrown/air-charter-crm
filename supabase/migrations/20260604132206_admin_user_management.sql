@@ -55,7 +55,9 @@ begin
 end;
 $$;
 
-revoke all on function public.list_app_users() from public, anon;
-revoke all on function public.set_user_admin(uuid, boolean) from public, anon;
-grant execute on function public.list_app_users() to authenticated, service_role;
-grant execute on function public.set_user_admin(uuid, boolean) to authenticated, service_role;
+-- Exclude service_role too (Supabase default-grants execute on new public
+-- functions to it); this app never calls these as service_role.
+revoke all on function public.list_app_users() from public, anon, service_role;
+revoke all on function public.set_user_admin(uuid, boolean) from public, anon, service_role;
+grant execute on function public.list_app_users() to authenticated;
+grant execute on function public.set_user_admin(uuid, boolean) to authenticated;
