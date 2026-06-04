@@ -26,6 +26,12 @@ as $$
   select coalesce((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false);
 $$;
 
+-- Explicit privileges (functions default to PUBLIC execute). RLS policies on the
+-- data tables call this as the authenticated role, so grant it there; anon never
+-- needs it.
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated, service_role;
+
 -- companies
 create policy "Admins can view all companies"
   on public.companies for select to authenticated using (public.is_admin());
