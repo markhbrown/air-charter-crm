@@ -51,6 +51,5 @@ create policy "Users can delete their own inquiries"
 
 -- Explicit Data API privileges (https://github.com/orgs/supabase/discussions/45329):
 -- revoke inherited blanket grants, then grant exactly what each role needs.
-revoke all on public.inquiries from anon, authenticated;
+revoke all on public.inquiries from anon, authenticated, service_role;
 grant select, insert, update, delete on public.inquiries to authenticated;
-grant select, insert, update, delete on public.inquiries to service_role;

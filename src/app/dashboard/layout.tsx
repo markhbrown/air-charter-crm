@@ -20,6 +20,8 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const isAdmin = user.app_metadata?.role === "admin";
+
   return (
     <div className="flex min-h-full flex-1">
       <aside className="flex w-64 shrink-0 flex-col border-r bg-background p-4">
@@ -27,7 +29,7 @@ export default async function DashboardLayout({
           <p className="text-lg font-semibold">Air Charter CRM</p>
         </div>
         <div className="mt-4 flex-1">
-          <DashboardNav />
+          <DashboardNav isAdmin={isAdmin} />
         </div>
         <div className="border-t pt-4">
           <p className="px-3 pb-2 text-xs text-muted-foreground truncate">

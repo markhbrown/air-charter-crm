@@ -45,6 +45,5 @@ create policy "Users can delete their own contacts"
 
 -- Explicit Data API privileges (https://github.com/orgs/supabase/discussions/45329):
 -- revoke inherited blanket grants, then grant exactly what each role needs.
-revoke all on public.contacts from anon, authenticated;
+revoke all on public.contacts from anon, authenticated, service_role;
 grant select, insert, update, delete on public.contacts to authenticated;
-grant select, insert, update, delete on public.contacts to service_role;

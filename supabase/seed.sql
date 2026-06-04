@@ -1,11 +1,14 @@
 -- Seed data for local development. Runs automatically on `supabase db reset`.
 --
--- Creates TWO test accounts, each owning its own companies, contacts and
--- inquiries. Because every table is scoped to user_id via RLS, each account can
--- only ever see its own rows — log in as each to see the isolation in action.
+-- Creates THREE test accounts (all Password123!):
 --
---   broker@aircharter.test   / Password123!   (owns the Meridian/Acme/Aurora data)
---   manager@aircharter.test  / Password123!   (owns a separate set of records)
+--   broker1@aircharter.test    owns the Meridian/Acme/Aurora data
+--   broker2@aircharter.test   owns a separate set of records
+--   admin@aircharter.test     full-access admin — sees & manages ALL accounts' data
+--
+-- The two owner accounts are scoped to their own rows via RLS (log in as each
+-- to see the isolation). The admin account carries app_metadata.role = 'admin',
+-- which extra RLS policies use to grant full (read + write) access across every owner.
 --
 -- Fixed UUIDs are used throughout so foreign keys line up and reseeding is
 -- deterministic.
@@ -23,7 +26,7 @@ insert into auth.users (
   '00000000-0000-0000-0000-000000000000',
   '11111111-1111-1111-1111-111111111111',
   'authenticated', 'authenticated',
-  'broker@aircharter.test',
+  'broker1@aircharter.test',
   crypt('Password123!', gen_salt('bf')),
   now(), now(),
   '{"provider":"email","providers":["email"]}',
@@ -38,7 +41,7 @@ insert into auth.identities (
 ) values (
   '11111111-1111-1111-1111-111111111111',
   '11111111-1111-1111-1111-111111111111',
-  '{"sub":"11111111-1111-1111-1111-111111111111","email":"broker@aircharter.test","email_verified":true}',
+  '{"sub":"11111111-1111-1111-1111-111111111111","email":"broker1@aircharter.test","email_verified":true}',
   'email',
   now(), now(), now()
 );
@@ -86,7 +89,7 @@ insert into public.inquiries
    null, 'LPCS', 'IBZ', '2026-07-02', 'New');
 
 -- ===========================================================================
--- Second account: manager@aircharter.test
+-- Second account: broker2@aircharter.test
 -- Owns a completely separate set of records. Logging in as this user shows
 -- none of the broker's data above — that is RLS owner-isolation in action.
 -- ===========================================================================
@@ -100,7 +103,7 @@ insert into auth.users (
   '00000000-0000-0000-0000-000000000000',
   '22222222-2222-2222-2222-222222222222',
   'authenticated', 'authenticated',
-  'manager@aircharter.test',
+  'broker2@aircharter.test',
   crypt('Password123!', gen_salt('bf')),
   now(), now(),
   '{"provider":"email","providers":["email"]}',
@@ -115,7 +118,7 @@ insert into auth.identities (
 ) values (
   '22222222-2222-2222-2222-222222222222',
   '22222222-2222-2222-2222-222222222222',
-  '{"sub":"22222222-2222-2222-2222-222222222222","email":"manager@aircharter.test","email_verified":true}',
+  '{"sub":"22222222-2222-2222-2222-222222222222","email":"broker2@aircharter.test","email_verified":true}',
   'email',
   now(), now(), now()
 );
@@ -138,3 +141,39 @@ insert into public.inquiries
    '50000000-0000-0000-0000-000000000002', 'SIN', 'KUL', '2026-06-20', 'Quoting'),
   ('22222222-2222-2222-2222-222222222222', '40000000-0000-0000-0000-000000000001',
    '50000000-0000-0000-0000-000000000001', 'EDI', 'BEB', '2026-07-05', 'New');
+
+-- ===========================================================================
+-- Third account: admin@aircharter.test  (read-only oversight role)
+-- Carries app_metadata.role = 'admin', so RLS lets it VIEW every owner's
+-- companies/contacts/inquiries. It owns no data of its own. The two accounts
+-- above are unaffected — they still see only their own rows.
+-- ===========================================================================
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '33333333-3333-3333-3333-333333333333',
+  'authenticated', 'authenticated',
+  'admin@aircharter.test',
+  crypt('Password123!', gen_salt('bf')),
+  now(), now(),
+  '{"provider":"email","providers":["email"],"role":"admin"}',
+  '{}',
+  now(), now(),
+  '', '', '', ''
+);
+
+insert into auth.identities (
+  user_id, provider_id, identity_data, provider,
+  last_sign_in_at, created_at, updated_at
+) values (
+  '33333333-3333-3333-3333-333333333333',
+  '33333333-3333-3333-3333-333333333333',
+  '{"sub":"33333333-3333-3333-3333-333333333333","email":"admin@aircharter.test","email_verified":true}',
+  'email',
+  now(), now(), now()
+);

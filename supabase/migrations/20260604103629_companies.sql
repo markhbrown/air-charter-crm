@@ -59,6 +59,8 @@ create policy "Users can delete their own companies"
 -- default privileges, so revoke first, then grant exactly what each role needs.
 -- The result: `anon` gets nothing (private CRM data), `authenticated` gets DML
 -- only (RLS scopes it to their own rows). RLS governs rows; GRANTs govern ops.
-revoke all on public.companies from anon, authenticated;
+-- service_role is revoked too (Supabase default-privileges grant it full access
+-- to new public tables): this app never uses the Secret key / service_role, so
+-- least-privilege keeps the data reachable only by the authenticated owner.
+revoke all on public.companies from anon, authenticated, service_role;
 grant select, insert, update, delete on public.companies to authenticated;
-grant select, insert, update, delete on public.companies to service_role;

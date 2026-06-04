@@ -33,16 +33,17 @@ npm run dev
 
 ### Test accounts
 
-`supabase db reset` seeds **two** accounts, each owning its own companies, contacts and inquiries:
+`supabase db reset` seeds **three** accounts (all `Password123!`):
 
-| Email | Password | Owns |
+| Email | Role | Sees |
 | --- | --- | --- |
-| `broker@aircharter.test` | `Password123!` | Meridian / Acme / Aurora data |
-| `manager@aircharter.test` | `Password123!` | a separate set of records |
+| `broker1@aircharter.test` | owner | only its own data (Meridian / Acme / Aurora) |
+| `broker2@aircharter.test` | owner | only its own data (a separate set) |
+| `admin@aircharter.test` | admin | **all** accounts' data, and can manage it |
 
-Log in as each to see Row Level Security in action: **neither account can see the other's data**.
-Both are **local only** — recreated on every `supabase db reset` and absent from any hosted/deployed
-environment (create a demo account there via normal sign-up).
+Log in as the two owners to see Row Level Security in action — **neither sees the other's data**. Log
+in as `admin@` to see (and create/edit/delete) **everything**. All are **local only** — recreated on
+every `supabase db reset` and absent from any hosted/deployed environment.
 
 ## Security & data access
 
@@ -67,14 +68,33 @@ only ever access their own data.**
   -- insert/update/delete policies likewise check (select auth.uid()) = user_id
   ```
 
-  Table privileges are granted explicitly — `revoke all ... from anon` (the data is private) and
-  `grant ... to authenticated, service_role` — so a table is never reachable by the public key
-  without policies.
+  Table privileges are granted explicitly — `revoke all ... from anon, service_role` (Supabase's
+  default privileges otherwise grant both full access) and `grant ... to authenticated` — so the data
+  is reachable only by the authenticated owner through the policies above, never by the public or
+  service-role keys.
+- **Admin role** — an optional back-office role. A user whose `app_metadata.role = "admin"` (set
+  server-side, not user-editable, and carried in the verified JWT) gets extra permissive policies that
+  read the role from `auth.jwt()` and grant **full access to every owner's data**:
+
+  ```sql
+  create policy "Admins can view all companies"
+    on public.companies for select
+    to authenticated
+    using ((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+  -- plus matching update/delete admin policies; these OR with the owner policies
+  ```
+
+  These OR with the owner policies, so non-admins are unaffected — they still only see/manage their own
+  rows. (`admin@aircharter.test` is the seeded admin.) Admins also get a **User management** page at
+  `/dashboard/admin` (admin-only route; non-admins are redirected) to grant/revoke admin on other users
+  — backed by admin-gated `SECURITY DEFINER` functions (`list_app_users`, `set_user_admin`) that refuse
+  to let you change your own role.
 - **Keys** — the browser only ever uses the **Publishable** key; the **Secret** (service-role) key is
   server-only and never shipped to the client.
-- **See it yourself** — sign in as `broker@aircharter.test` then `manager@aircharter.test` (both
-  `Password123!`): each sees only its own companies/contacts/inquiries. Unauthenticated requests are
-  redirected to `/login`, and the data API returns zero rows without a valid session.
+- **See it yourself** — sign in as `broker1@aircharter.test` then `broker2@aircharter.test` (both
+  `Password123!`): each sees only its own companies/contacts/inquiries. Then sign in as
+  `admin@aircharter.test` to see and manage all of it. Unauthenticated requests are redirected to
+  `/login`, and the data API returns zero rows without a valid session.
 
 ### Limitations & what I'd do next
 
