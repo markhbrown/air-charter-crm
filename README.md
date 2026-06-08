@@ -101,3 +101,17 @@ Used Claude code.
 https://air-charter-crm.vercel.app/
 
 use the login details stated above.
+
+### Improvements
+
+#### Frontend
+
+- responsive design so it's more mobile friendly
+- loading spinner / messages on screen
+- switch to calling api route (but requires more work and plugging in) - server actions is fine for this mvp
+
+#### Backend
+
+- logging (sentry.io)
+- switch to using an api route in nextjs
+- make it multi tenant - orgs rather than just single users
