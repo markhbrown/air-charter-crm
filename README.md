@@ -111,9 +111,11 @@ use the login details stated above.
 - switch to calling api route (but requires more work and plugging in) - server actions is fine for this mvp
 - add in paging (or lazy loading) for the tabled data - not required atm as small dataset
 - inquiries page - could allow multi select on certain options and not just one
+- add sign up page
 
 #### Backend
 
 - logging (sentry.io)
 - switch to using an api route in nextjs
 - make it multi tenant - orgs rather than just single users
+- enhance the admin screens (invite staff members, you could auto allow sign ups from specific company domains)
