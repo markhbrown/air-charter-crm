@@ -107,8 +107,10 @@ use the login details stated above.
 #### Frontend
 
 - responsive design so it's more mobile friendly
-- loading spinner / messages on screen
+- loading spinner / messages on screen for success (if needed)
 - switch to calling api route (but requires more work and plugging in) - server actions is fine for this mvp
+- add in paging (or lazy loading) for the tabled data - not required atm as small dataset
+- inquiries page - could allow multi select on certain options and not just one
 
 #### Backend
 
